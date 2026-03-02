@@ -104,10 +104,9 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(env.port, "0.0.0.0", () => {
-    console.log(`Server running at http://0.0.0.0:${env.port}`);
-  });
-}
+const PORT = process.env.PORT || env.port || 5000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running at http://0.0.0.0:${PORT}`);
+});
 
 export default app;
