@@ -1,6 +1,6 @@
 import client from "./client";
 
-const BASE_URL = (import.meta.env.VITE_BACKEND_URL || "")
+const BASE_URL = (import.meta.env.VITE_API_URL || "")
 export const authApi = {
     login: async (email, password, role) => {
         const res = await client.post(`${BASE_URL}/api/login`, { Email: email, Password: password, Role: role });
