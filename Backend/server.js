@@ -4,6 +4,7 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+
 import connectdb from "./config/db.js";
 import { env } from "./config/env.js";
 
@@ -13,100 +14,95 @@ import donorRoutes from "./Router/donor.js";
 import orgRoutes from "./Router/org.js";
 import adminRoutes from "./Router/admin.js";
 import geoRoutes from "./Router/geo.js";
-import healthRoutes from "./Router/health.js";
 import notificationRoutes from "./Router/notification.js";
 import requestRoutes from "./Router/requests-complete.js";
 import donationRoutes from "./Router/donation.js";
 import appointmentRoutes from "./Router/appointments.js";
 
 const app = express();
+
 console.log("----------------------------------------");
-console.log("SERVER STARTING - REVISION 3 - DEBUG MODE");
+console.log("SERVER STARTING - PRODUCTION MODE");
 console.log("----------------------------------------");
 
-// Moving logger to top for debug
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from ${req.origin || req.headers.origin}`);
-  next();
-});
+/* ==============================
+   MIDDLEWARE
+================================ */
 
-// CORS configuration - allowing any localhost for dev
-const allowedOrigins = [
-  "https://blood-donation-kplu.vercel.app",
-];
+// Logger
+app.use(morgan("dev"));
 
+// CORS (Production Safe)
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin ||
-        origin.startsWith("http://localhost:") ||
-        origin.startsWith("http://127.0.0.1:") ||
-        allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log(`CORS Blocked origin: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true, // allow all origins (Vercel, localhost, etc.)
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 200, // Important for older browsers and some preflights
   })
 );
 
-// Standard middleware
+// Security
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: false,
+  })
+);
 
-app.use(helmet({
-  crossOriginResourcePolicy: false,
-  crossOriginOpenerPolicy: false,
-}));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Rate limit config
 
-// Basic rate limit for auth endpoints
-// const authLimiter = rateLimit({
-//   windowMs: env.rateLimitWindowMs,
-//   max: env.rateLimitMax,
-// });
-// app.use(["/api/login", "/api/signup"], authLimiter);
-
+/* ==============================
+   DATABASE
+================================ */
 connectdb();
 
-// api health
+/* ==============================
+   HEALTH CHECK
+================================ */
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK" });
-})
+});
 
-// Routes
+/* ==============================
+   ROUTES
+================================ */
 app.use("/api", auth);
 app.use("/api", ForgotPassword);
+
 app.use("/api/donor", donorRoutes);
 app.use("/api/org", orgRoutes);
-app.use("/api/admin/donations", donationRoutes); // More specific route first
+
+app.use("/api/admin/donations", donationRoutes);
 app.use("/api/admin", adminRoutes);
+
 app.use("/api/geo", geoRoutes);
 app.use("/api/requests", requestRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/notifications", notificationRoutes);
-// app.use("/health", healthRoutes); // Disabling external healthRoutes file for now to be simple
 
-// Fallback 404
+/* ==============================
+   FALLBACKS
+================================ */
+
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
 // Global error handler
-app.use((err, _req, res, _next) => {
-  console.error(err);
+app.use((err, req, res, next) => {
+  console.error("ERROR:", err);
   res.status(500).json({ message: "Internal server error" });
 });
 
+/* ==============================
+   SERVER START
+================================ */
 const PORT = process.env.PORT || env.port || 5000;
+
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 export default app;
