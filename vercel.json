@@ -19,16 +19,8 @@
       "destination": "/Backend/server.js"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/Client/dist/assets/$1"
-    },
-    {
-      "source": "/vite.svg",
-      "destination": "/Client/dist/vite.svg"
-    },
-    {
       "source": "/(.*)",
-      "destination": "/Client/dist/index.html"
+      "destination": "/index.html"
     }
   ]
 }
