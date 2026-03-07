@@ -19,8 +19,12 @@
       "destination": "/Backend/server.js"
     },
     {
+      "source": "/assets/(.*)",
+      "destination": "/dist/assets/$1"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/"
+      "destination": "/dist/index.html"
     }
   ]
 }
